@@ -4,12 +4,6 @@ var PipeDrive = require('pipedrive');
 var request = require('request');
 var Bot = (function () {
     function Bot(args) {
-        try {
-            this.db = args.db;
-        }
-        catch (ex) {
-            console.log(ex);
-        }
         if (typeof this._api_token === 'undefined') {
             throw new TypeError("url.parameter(\"api_token\") is required.");
         }
@@ -67,13 +61,13 @@ var Bot = (function () {
                                     else {
                                         body['text'] = util.format("<mailto:%s|%s> has updated the deal *%s* to `%s` \n%s", user.email, user.name, deal.title, stage.name, deal_site_url_1);
                                     }
-                                    _this.postIfToSlack(user.id, body);
+                                    _this.postToSlack(body);
                                 });
                             }
                             else {
                                 var status_1 = deal.status.substr(0, 1).toUpperCase() + deal.status.substr(1, deal.status.length);
                                 body['text'] = util.format("<mailto:%s|%s> has changed status of deal *%s* to `%s` \n%s", user.email, user.name, deal.title, status_1, deal_site_url_1);
-                                _this.postIfToSlack(user.id, body);
+                                _this.postToSlack(body);
                             }
                         }
                         else {
@@ -104,34 +98,6 @@ var Bot = (function () {
             }
         }
         return _id;
-    };
-    Bot.prototype.postIfToSlack = function (userId, body) {
-        var _this = this;
-        _this.db.get(userId, function (err, value) {
-            if (err) {
-                if (err.notFound) {
-                    _this.db.put(userId, body['text'], function (err) {
-                        if (err) {
-                            _this.cb(err);
-                            return;
-                        }
-                        _this.postToSlack(body);
-                    });
-                }
-            }
-            else if (value !== body['text']) {
-                _this.db.put(userId, body['text'], function (err) {
-                    if (err) {
-                        _this.cb(err);
-                        return;
-                    }
-                    _this.postToSlack(body);
-                });
-            }
-            else {
-                _this.cb({ success: false });
-            }
-        });
     };
     Bot.prototype.postToSlack = function (body) {
         var _this = this;

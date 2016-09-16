@@ -23,12 +23,6 @@ export class Bot {
   }
 
   constructor(args:any){
-    try {
-      this.db = args.db;
-
-    } catch(ex) {
-      console.log(ex);
-    }
 
     if (typeof this._api_token === 'undefined'){
         throw new TypeError("url.parameter(\"api_token\") is required.");
@@ -81,7 +75,7 @@ export class Bot {
                        body['text'] = util.format("<mailto:%s|%s> has updated the deal *%s* to `%s` \n%s", user.email,  user.name, deal.title, stage.name, deal_site_url);
                      }
 
-                     _this.postIfToSlack(user.id, body);
+                     _this.postToSlack(body);
                    });
                  }
                  else {
@@ -89,7 +83,7 @@ export class Bot {
 
                    body['text'] = util.format("<mailto:%s|%s> has changed status of deal *%s* to `%s` \n%s", user.email, user.name, deal.title, status, deal_site_url);
 
-                   _this.postIfToSlack(user.id, body);
+                   _this.postToSlack(body);
                  }
                } else {
                  _this.cb({success : false});
@@ -119,37 +113,6 @@ export class Bot {
       }
     }
     return _id;
-  }
-
-  private postIfToSlack(userId:string, body:any){
-      let _this = this;
-
-      _this.db.get(userId, (err, value)=>{
-          if (err){
-            if (err.notFound){
-                // nothing here
-               _this.db.put(userId, body['text'], (err)=>{
-                  if (err){
-                    _this.cb(err);
-                    return
-                  }
-                  _this.postToSlack(body);
-               });
-             }
-          }
-          else if (value !== body['text']){
-            _this.db.put(userId, body['text'], (err)=>{
-               if (err){
-                 _this.cb(err);
-                 return
-               }
-               _this.postToSlack(body);
-            });
-          }
-          else {
-            _this.cb({ success : false});
-          }
-      });
   }
 
   private postToSlack(body:any){
