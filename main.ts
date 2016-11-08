@@ -23,12 +23,11 @@ export class Bot {
   }
 
   constructor(args:any){
-
     if (typeof this._api_token === 'undefined'){
-        throw new TypeError("url.parameter(\"api_token\") is required.");
+        throw "url.parameter(\"api_token\") is required.";
     }
     if (typeof this._slack_url === 'undefined'){
-        throw new TypeError("url.parameter(\"slack_url\") is required.");
+        throw "url.parameter(\"slack_url\") is required.";
     }
 
     this.args = args;

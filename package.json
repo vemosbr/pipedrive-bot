@@ -1,35 +1,34 @@
 {
-  "name": "pipedrive",
-  "private": true,
-  "version": "1.0.1",
-  "description": "This bot connects Pipedrive to a Slack Channel.",
-  "summary": "To enable Pipedrive to talk to Slack, enter in your Pipedrive API Access Token and your Slack Incomming WebHook URL and click to copy to the clipboard. Then enter into Pipedrive's push notification section.",
-  "main": "main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "pipedrive",
-    "Bot"
-  ],
-  "parameters": [
-    {
-      "title": "Access Token",
-      "description": "pipedrive -> settings-> API -> Access Token",
-      "name": "api_token"
-    },
-    {
-      "title": "Incoming Webhook URL",
-      "description": "slack-> app & custom integrations -> incoming webhook",
-      "name": "slack_url",
-      "datatype": "url"
-    }
-  ],
-  "author": "Recime Inc. <hello@recime.ai>",
-  "license": "MIT",
-  "uid": "1da8c2e0ee309575e11cc602b80a86c2",
-  "dependencies": {
-    "pipedrive": "^2.1.2",
-    "request": "^2.74.0"
-  }
+	"author": "Recime Inc <hello@recime.ai>",
+	"dependencies": {
+		"pipedrive": "^2.1.2",
+		"request": "^2.74.0"
+	},
+	"description": "This bot connects Pipedrive to a Slack Channel.",
+	"keywords": [
+		"pipedrive",
+		"Bot"
+	],
+	"license": "MIT",
+	"main": "main.js",
+	"name": "pipedrive",
+	"parameters": [
+		{
+			"description": "pipedrive -> settings-> API -> Access Token",
+			"name": "api_token",
+			"title": "Access Token"
+		},
+		{
+			"datatype": "url",
+			"description": "slack-> app & custom integrations -> incoming webhook",
+			"name": "slack_url",
+			"title": "Incoming Webhook URL"
+		}
+	],
+	"private": true,
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"summary": "To enable Pipedrive to talk to Slack, enter in your Pipedrive API Access Token and your Slack Incomming WebHook URL and click to copy to the clipboard. Then enter into Pipedrive's push notification section.",
+	"version": "1.0.1"
 }
