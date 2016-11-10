@@ -41,19 +41,20 @@ export class Bot {
   }
 
   execute(cb:any){
-    this.cb = cb;
-
-    let _this = this;
+    let that = this;
     let event = this.args.event;
 
-    if (_this.events.indexOf(event) !== -1){
+    if (that.events.indexOf(event) !== -1){
        let host = this.args.meta.host;
-       let id = _this.getDealId(event, _this.args.current);
-       let userId = _this.args.meta.user_id;
+       let id = that.getDealId(event, that.args.current);
+       let userId = that.args.meta.user_id;
 
-       _this.pipeClient.Users.get(userId, (err, user)=>{
+       that.pipeClient.Users.get(userId, (err, user)=>{
+         if (err){
+            throw err
+         }
          if (user && id){
-           _this.pipeClient.Deals.get(id, function(err, deal){
+           that.pipeClient.Deals.get(id, function(err, deal){
                if (err){
                   throw err 
                }
@@ -66,7 +67,7 @@ export class Bot {
                  };
 
                  if (deal.status === "open"){
-                   _this.pipeClient.Stages.get(deal.stage_id, function(err, stage){
+                   that.pipeClient.Stages.get(deal.stage_id, function(err, stage){
                      if (event === "added.deal"){
                        body['text'] = util.format("<mailto:%s|%s> has added a deal *%s*", user.email, user.name, deal.title);
                      }
@@ -77,7 +78,7 @@ export class Bot {
                        body['text'] = util.format("<mailto:%s|%s> has updated the deal *%s* to `%s` \n%s", user.email,  user.name, deal.title, stage.name, deal_site_url);
                      }
 
-                     _this.postToSlack(body);
+                     that.postToSlack(body, cb);
                    });
                  }
                  else {
@@ -85,18 +86,20 @@ export class Bot {
 
                    body['text'] = util.format("<mailto:%s|%s> has changed status of deal *%s* to `%s` \n%s", user.email, user.name, deal.title, status, deal_site_url);
 
-                   _this.postToSlack(body);
+                   that.postToSlack(body, cb);
                  }
                } else {
-                 _this.cb({success : false});
+                 cb({
+                   success : false
+                  });
                }
            });
          } else {
-            _this.cb();
+            cb();
          }
        });// user
     } else {
-        _this.cb();
+        cb();
     }
   }
 
@@ -117,8 +120,8 @@ export class Bot {
     return _id;
   }
 
-  private postToSlack(body:any){
-    let _this = this;
+  private postToSlack(body:any, cb: any){
+    let that = this;
     let url = this._slack_url;
 
     request({
@@ -129,7 +132,7 @@ export class Bot {
       if (err){
         throw err
       }
-      _this.cb({ status : body });
+      cb({ status : body });
     }); // request
   }
 }
