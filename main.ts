@@ -54,6 +54,9 @@ export class Bot {
        _this.pipeClient.Users.get(userId, (err, user)=>{
          if (user && id){
            _this.pipeClient.Deals.get(id, function(err, deal){
+               if (err){
+                  throw err 
+               }
                if (deal && deal.id){
                  let deal_site_url = util.format("https://%s/deal/%s", host, deal.id);
 
@@ -124,10 +127,9 @@ export class Bot {
       body : JSON.stringify(body)
     }, (err, response, body)=> {
       if (err){
-        return _this.cb(err);
+        throw err
       }
       _this.cb({ status : body });
-
     }); // request
   }
 }
