@@ -76,19 +76,17 @@ var Bot = (function () {
                             }
                         }
                         else {
-                            cb({
-                                success: false
-                            });
+                            throw "Invalid Deal";
                         }
                     });
                 }
                 else {
-                    throw "Invalid deal";
+                    throw "Invalid User";
                 }
             }); // user
         }
         else {
-            cb();
+            throw util.format("Event: %s not supported", event);
         }
     };
     Bot.prototype.getDealId = function (event, current) {
