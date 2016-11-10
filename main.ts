@@ -10,10 +10,6 @@ export class Bot {
   private _api_token:string;
   private _slack_url:string;
 
-  private cb: any;
-
-  private db: any;
-
   set api_token(value:string){
     this._api_token = value;
   }
@@ -89,17 +85,15 @@ export class Bot {
                    that.postToSlack(body, cb);
                  }
                } else {
-                 cb({
-                   success : false
-                  });
+                 throw "Invalid Deal";
                }
            });
          } else {
-            cb();
+            throw "Invalid User";
          }
        });// user
     } else {
-        cb();
+        throw util.format("Event: %s not supported", event);
     }
   }
 
@@ -132,7 +126,7 @@ export class Bot {
       if (err){
         throw err
       }
-      cb({ status : body });
+      cb(body);
     }); // request
   }
 }

@@ -34,16 +34,21 @@ var Bot = (function () {
         configurable: true
     });
     Bot.prototype.execute = function (cb) {
-        this.cb = cb;
-        var _this = this;
+        var that = this;
         var event = this.args.event;
-        if (_this.events.indexOf(event) !== -1) {
+        if (that.events.indexOf(event) !== -1) {
             var host_1 = this.args.meta.host;
-            var id_1 = _this.getDealId(event, _this.args.current);
-            var userId = _this.args.meta.user_id;
-            _this.pipeClient.Users.get(userId, function (err, user) {
+            var id_1 = that.getDealId(event, that.args.current);
+            var userId = that.args.meta.user_id;
+            that.pipeClient.Users.get(userId, function (err, user) {
+                if (err) {
+                    throw err;
+                }
                 if (user && id_1) {
-                    _this.pipeClient.Deals.get(id_1, function (err, deal) {
+                    that.pipeClient.Deals.get(id_1, function (err, deal) {
+                        if (err) {
+                            throw err;
+                        }
                         if (deal && deal.id) {
                             var deal_site_url_1 = util.format("https://%s/deal/%s", host_1, deal.id);
                             var body = {
@@ -51,7 +56,7 @@ var Bot = (function () {
                                 "icon_url": "https://www.recime.ai/image/pipedrive"
                             };
                             if (deal.status === "open") {
-                                _this.pipeClient.Stages.get(deal.stage_id, function (err, stage) {
+                                that.pipeClient.Stages.get(deal.stage_id, function (err, stage) {
                                     if (event === "added.deal") {
                                         body['text'] = util.format("<mailto:%s|%s> has added a deal *%s*", user.email, user.name, deal.title);
                                     }
@@ -61,27 +66,29 @@ var Bot = (function () {
                                     else {
                                         body['text'] = util.format("<mailto:%s|%s> has updated the deal *%s* to `%s` \n%s", user.email, user.name, deal.title, stage.name, deal_site_url_1);
                                     }
-                                    _this.postToSlack(body);
+                                    that.postToSlack(body, cb);
                                 });
                             }
                             else {
                                 var status_1 = deal.status.substr(0, 1).toUpperCase() + deal.status.substr(1, deal.status.length);
                                 body['text'] = util.format("<mailto:%s|%s> has changed status of deal *%s* to `%s` \n%s", user.email, user.name, deal.title, status_1, deal_site_url_1);
-                                _this.postToSlack(body);
+                                that.postToSlack(body, cb);
                             }
                         }
                         else {
-                            _this.cb({ success: false });
+                            cb({
+                                success: false
+                            });
                         }
                     });
                 }
                 else {
-                    _this.cb();
+                    throw "Invalid deal";
                 }
-            });
+            }); // user
         }
         else {
-            _this.cb();
+            cb();
         }
     };
     Bot.prototype.getDealId = function (event, current) {
@@ -99,8 +106,8 @@ var Bot = (function () {
         }
         return _id;
     };
-    Bot.prototype.postToSlack = function (body) {
-        var _this = this;
+    Bot.prototype.postToSlack = function (body, cb) {
+        var that = this;
         var url = this._slack_url;
         request({
             url: url,
@@ -108,10 +115,10 @@ var Bot = (function () {
             body: JSON.stringify(body)
         }, function (err, response, body) {
             if (err) {
-                return _this.cb(err);
+                throw err;
             }
-            _this.cb({ status: body });
-        });
+            cb(body);
+        }); // request
     };
     return Bot;
 }());
