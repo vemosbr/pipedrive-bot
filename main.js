@@ -41,6 +41,8 @@ var Event = (function () {
 exports.Event = Event;
 var Bot = (function () {
     function Bot(args) {
+        console.log(this._api_token);
+        console.log(this._slack_url);
         if (typeof this._api_token === 'undefined') {
             throw "url.parameter(\"api_token\") is required.";
         }
@@ -124,7 +126,9 @@ var Bot = (function () {
             }); // user
         }
         else {
-            throw util.format("Event: %s not supported", event);
+            cb({
+                status: "ok"
+            });
         }
     };
     Bot.prototype.getDeal = function (args, cb) {

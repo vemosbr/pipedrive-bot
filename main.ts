@@ -31,6 +31,9 @@ export class Bot {
   }
 
   constructor(args:any){
+    console.log(this._api_token);
+    console.log(this._slack_url);
+
     if (typeof this._api_token === 'undefined'){
         throw "url.parameter(\"api_token\") is required.";
     }
@@ -107,7 +110,9 @@ export class Bot {
          }
        });// user
     } else {
-        throw util.format("Event: %s not supported", event);
+        cb({
+          status : "ok"
+        });
     }
   }
 
