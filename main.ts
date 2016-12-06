@@ -31,9 +31,6 @@ export class Bot {
   }
 
   constructor(args:any){
-    console.log(this._api_token);
-    console.log(this._slack_url);
-
     if (typeof this._api_token === 'undefined'){
         throw "url.parameter(\"api_token\") is required.";
     }
@@ -42,7 +39,9 @@ export class Bot {
     }
 
     this.args = args;
+
     this.pipeClient = new PipeDrive.Client(this._api_token);
+
     this.events = [
         "added.note",
         "updated.deal",
@@ -61,7 +60,8 @@ export class Bot {
 
        that.pipeClient.Users.get(userId, (err, user)=>{
          if (err){
-            throw err
+            // logs in recime.
+            console.log(err);
          }
          if (user){
            that.getDeal(that.args, (deal)=>{
@@ -76,7 +76,7 @@ export class Bot {
                  if (deal.status === Status.OPEN && deal.stage_id){
                     if (event === Event.ADDED_DEAL || event === Event.ADDED_NOTE){
                       body['text'] = util.format("<mailto:%s|%s> has %s in *%s* \n%s", user.email, user.name, event.split(".").join(" a "), deal.title, deal_site_url);
-                    
+
                       if (event === Event.ADDED_DEAL){
                          body['text'] = util.format("<mailto:%s|%s> has added a new deal *%s* \n%s", user.email, user.name, deal.title, deal_site_url);
                       }
@@ -89,7 +89,7 @@ export class Bot {
                           throw err;
                         }
                         body['text'] = util.format("<mailto:%s|%s> has updated the deal *%s* to `%s` \n%s", user.email,  user.name, deal.title, stage.name, deal_site_url);
-                       
+
                         that.postToSlack(body, cb);
                       });
                     }
@@ -120,19 +120,21 @@ export class Bot {
     let event = args.event;
 
     if (event === Event.ADDED_NOTE){
-       let dealId = args.current.deal_id;
-       this.pipeClient.Deals.get(dealId, (err, deal)=>{
-            if (err) {
-                throw err;
-            }
-            cb(deal);
-       });
+      let dealId = args.current.deal_id;
+      if (dealId){
+         this.pipeClient.Deals.get(dealId, (err, deal)=>{
+              cb(deal);
+         });
+      }
+      else{
+        cb(null);
+      }
     }
     else {
       if (this.args.meta.action === Status.DELETED){
          return cb(args.previous);
       }
-      else if ((event === Event.ADDED_DEAL) 
+      else if ((event === Event.ADDED_DEAL)
       || (args.current && args.current.stage_id !== args.previous.stage_id)
       || (args.current.status !== Status.OPEN)){
         return cb(args.current);

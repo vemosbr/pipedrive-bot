@@ -41,8 +41,6 @@ var Event = (function () {
 exports.Event = Event;
 var Bot = (function () {
     function Bot(args) {
-        console.log(this._api_token);
-        console.log(this._slack_url);
         if (typeof this._api_token === 'undefined') {
             throw "url.parameter(\"api_token\") is required.";
         }
@@ -80,7 +78,8 @@ var Bot = (function () {
             var userId = that.args.meta.user_id;
             that.pipeClient.Users.get(userId, function (err, user) {
                 if (err) {
-                    throw err;
+                    // logs in recime.
+                    console.log(err);
                 }
                 if (user) {
                     that.getDeal(that.args, function (deal) {
@@ -135,12 +134,14 @@ var Bot = (function () {
         var event = args.event;
         if (event === Event.ADDED_NOTE) {
             var dealId = args.current.deal_id;
-            this.pipeClient.Deals.get(dealId, function (err, deal) {
-                if (err) {
-                    throw err;
-                }
-                cb(deal);
-            });
+            if (dealId) {
+                this.pipeClient.Deals.get(dealId, function (err, deal) {
+                    cb(deal);
+                });
+            }
+            else {
+                cb(null);
+            }
         }
         else {
             if (this.args.meta.action === Status.DELETED) {
