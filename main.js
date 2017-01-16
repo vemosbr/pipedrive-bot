@@ -1,7 +1,8 @@
+/// <reference path="node.d.ts" />
 "use strict";
-var util = require('util');
-var PipeDrive = require('pipedrive');
-var request = require('request');
+var util = require("util");
+var PipeDrive = require("pipedrive");
+var request = require("request");
 var Status = (function () {
     function Status() {
     }
@@ -41,14 +42,8 @@ var Event = (function () {
 exports.Event = Event;
 var Bot = (function () {
     function Bot(args) {
-        if (typeof this._api_token === 'undefined') {
-            throw "url.parameter(\"api_token\") is required.";
-        }
-        if (typeof this._slack_url === 'undefined') {
-            throw "url.parameter(\"slack_url\") is required.";
-        }
         this.args = args;
-        this.pipeClient = new PipeDrive.Client(this._api_token);
+        this.pipeClient = new PipeDrive.Client(process.env.API_TOKEN);
         this.events = [
             "added.note",
             "updated.deal",
@@ -56,20 +51,6 @@ var Bot = (function () {
             "deleted.deal"
         ];
     }
-    Object.defineProperty(Bot.prototype, "api_token", {
-        set: function (value) {
-            this._api_token = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Bot.prototype, "slack_url", {
-        set: function (value) {
-            this._slack_url = value;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Bot.prototype.execute = function (cb) {
         var that = this;
         var event = this.args.event;
@@ -140,7 +121,9 @@ var Bot = (function () {
                 });
             }
             else {
-                cb(null);
+                cb({
+                    message: "Invalid Deal ID"
+                });
             }
         }
         else {
@@ -152,12 +135,14 @@ var Bot = (function () {
                 || (args.current.status !== Status.OPEN)) {
                 return cb(args.current);
             }
-            cb(null);
+            cb({
+                message: "Invalid Status"
+            });
         }
     };
     Bot.prototype.postToSlack = function (body, cb) {
         var that = this;
-        var url = this._slack_url;
+        var url = process.env.SLACK_WEBHOOK_URL;
         request({
             url: url,
             method: "POST",

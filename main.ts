@@ -1,7 +1,8 @@
+/// <reference path="node.d.ts" />
+
 import util = require('util')
 import PipeDrive = require('pipedrive');
 import request = require('request');
-
 
 export class Status {
     public static get OPEN():string { return "open"; }
@@ -19,28 +20,11 @@ export class Bot {
   private args: any;
   private pipeClient:any;
   private events:Array<string>;
-  private _api_token:string;
-  private _slack_url:string;
-
-  set api_token(value:string){
-    this._api_token = value;
-  }
-
-  set slack_url(value:string){
-    this._slack_url = value;
-  }
 
   constructor(args:any){
-    if (typeof this._api_token === 'undefined'){
-        throw "url.parameter(\"api_token\") is required.";
-    }
-    if (typeof this._slack_url === 'undefined'){
-        throw "url.parameter(\"slack_url\") is required.";
-    }
-
     this.args = args;
 
-    this.pipeClient = new PipeDrive.Client(this._api_token);
+    this.pipeClient = new PipeDrive.Client(process.env.API_TOKEN);
 
     this.events = [
         "added.note",
@@ -127,7 +111,9 @@ export class Bot {
          });
       }
       else{
-        cb(null);
+        cb({
+          message : "Invalid Deal ID"
+        });
       }
     }
     else {
@@ -139,13 +125,15 @@ export class Bot {
       || (args.current.status !== Status.OPEN)){
         return cb(args.current);
       }
-      cb(null);
+      cb({
+        message : "Invalid Status"
+      });
     }
   }
 
   private postToSlack(body:any, cb: any){
     let that = this;
-    let url = this._slack_url;
+    let url = process.env.SLACK_WEBHOOK_URL;
 
     request({
       url : url,
