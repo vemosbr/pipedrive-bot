@@ -1,6 +1,5 @@
 {
 	"author": "Recime Inc <hello@recime.ai>",
-	"title" : "Pipedrive Bot",
 	"dependencies": {
 		"pipedrive": "^2.1.2",
 		"request": "^2.74.0"

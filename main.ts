@@ -16,7 +16,7 @@ export class Event {
 }
 
 export class Bot {
-
+  
   private args: any;
   private pipeClient:any;
   private events:Array<string>;
