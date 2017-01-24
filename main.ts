@@ -7,10 +7,17 @@ export class Status {
     public static get DELETED():string { return "deleted"; }
 }
 
-export class Event {
-    public static get ADDED_DEAL():string { return "added.deal"; }
-    public static get ADDED_NOTE():string { return "added.note"; }
-    public static get UPDATED_DEAL():string { return "updated.note"; }
+export class PipedriveObject {
+    public static get ACTIVITY():string { return "activity"; }
+    public static get DEAL():string { return "deal"; }
+    public static get NOTE():string { return "note"; }
+}
+
+export class EventType {
+    public static get ADDED():string { return "added"; }
+    public static get UPDATED():string { return "updated"; }
+    public static get DELETED():string { return "deleted"; }
+    public static get MERGED():string { return "merged"; }
 }
 
 export class Bot {
@@ -25,9 +32,12 @@ export class Bot {
     this.pipeClient = new PipeDrive.Client(process.env.API_TOKEN);
 
     this.events = [
+        "added.activity",
+        "updated.activity",
         "added.note",
-        "updated.deal",
+        "updated.note",
         "added.deal",
+        "updated.deal",
         "deleted.deal"
     ];
   }
@@ -35,62 +45,118 @@ export class Bot {
   execute(cb:any){
     let that = this;
     let event = this.args.event;
+    let current = this.args.current;
+    let previous = this.args.previous;
+    let eventType = event.split(".")[0];
+    let eventObject = event.split(".")[1];
 
     if (that.events.indexOf(event) !== -1){
-       let host = this.args.meta.host;
-       let userId = that.args.meta.user_id;
+      let host = this.args.meta.host;
+      let userId = that.args.meta.user_id;
 
-       that.pipeClient.Users.get(userId, (err, user)=>{
-         if (err){
-            // logs in recime.
-            console.log(err);
-         }
-         if (user){
-           that.getDeal(that.args, (deal)=>{
-               if (deal && deal.id){
-                 let deal_site_url = util.format("https://%s/deal/%s", host, deal.id);
+      that.pipeClient.Users.get(userId, (err, user)=>{
+        if (err){
+          // logs in recime.
+          console.log(err);
+        }
+        if (user){
+          that.getDeal(that.args, (deal)=>{
+            if (deal && deal.id){
+              let deal_site_url = util.format("https://%s/deal/%s", host, deal.id);
 
-                 var body = {
-                   "username" : "pipedrive",
-                   "icon_url" : "https://www.recime.ai/image/pipedrive"
-                 };
+              let body = {
+                "username" : "Pipedrive",
+                "icon_url" : "https://www.pipedrive.com/images/favicons/apple-touch-icon-72x72.png",
+                "attachments": [
+                  {
+                    "title": deal.title,
+                    "title_link": deal_site_url,
+                    "pretext": util.format("%s has updated the deal *%s*", user.name, deal.title),
+                    "fallback": util.format("%s has updated the deal %s", user.name, deal.title),
+                    "mrkdwn_in": ["text", "pretext"]
+                  }
+                ]
+              };
 
-                 if (deal.status === Status.OPEN && deal.stage_id){
-                    if (event === Event.ADDED_DEAL || event === Event.ADDED_NOTE){
-                      body['text'] = util.format("<mailto:%s|%s> has %s in *%s* \n%s", user.email, user.name, event.split(".").join(" a "), deal.title, deal_site_url);
+              let attachmentFields: any[] = [
+                { "title": "Deal Owner", "value": user.name, "short": "true" }
+                ];
 
-                      if (event === Event.ADDED_DEAL){
-                         body['text'] = util.format("<mailto:%s|%s> has added a new deal *%s* \n%s", user.email, user.name, deal.title, deal_site_url);
-                      }
-                      that.postToSlack(body, cb);
+              if (deal.status === Status.OPEN && deal.stage_id){
+                that.pipeClient.Stages.get(deal.stage_id, (err, stage)=>{
+                  if (err){
+                    throw err;
+                  }
+                  let stageName = stage.name;
+                  if (stageName.length > 35){
+                    stageName = stageName.substring(0, 32) + "...";
+                  }
+                  attachmentFields.push({ "title": "Deal Stage", "value": stageName, "short": "true"});
+                  if (eventObject === PipedriveObject.DEAL){
+                    if (eventType === EventType.ADDED){
+                      body['attachments'][0]['text'] = 'Deal created.';
                     }
                     else {
-                      // stage_order_nr
-                      that.pipeClient.Stages.get(deal.stage_id, (err, stage)=>{
-                        if (err){
-                          throw err;
-                        }
-                        body['text'] = util.format("<mailto:%s|%s> has updated the deal *%s* to `%s` \n%s", user.email,  user.name, deal.title, stage.name, deal_site_url);
-
-                        that.postToSlack(body, cb);
-                      });
+                      if (previous && previous['stage_id']){
+                        that.pipeClient.Stages.get(deal.stage_id, (err, previousStage)=>{
+                          if (err){
+                            throw err;
+                          }
+                          body['attachments'][0]['text'] = util.format("Deal moved from stage `%s` to `%s`", previousStage.name, stage.name);
+                        });
+                      }
+                      else {
+                        body['attachments'][0]['text'] = util.format("Deal is now in stage `%s`", stage.name);
+                      }
                     }
-                 }
-                 else {
-                   let status = deal.status.substr(0, 1).toUpperCase() + deal.status.substr(1, deal.status.length);
+                    that.postToSlack(body, cb);
+                  }
+                  else {
+                    if (eventObject === PipedriveObject.NOTE){
+                      body['attachments'][0]['text'] = util.format("Note *%s*", eventType);
+                      attachmentFields.push({ "title": "Notes", "value": current['content'].replace(/<(?:.|\n)*?>/gm, '') });
+                    }
 
-                   body['text'] = util.format("<mailto:%s|%s> has changed status of deal *%s* to `%s` \n%s", user.email, user.name, deal.title, status, deal_site_url);
+                    if (eventObject === PipedriveObject.ACTIVITY){
+                      // body['attachments'][0]['text'] = util.format("Activity *%s* %s.", current['subject'], eventType);
+                      attachmentFields.push({ "title": util.format("Activity %s", eventType), "value": current['subject'], "short": "true"});
+                      attachmentFields.push({ "title": "Type", "value": current['type'].charAt(0).toUpperCase() + current['type'].slice(1), "short": "true"});
+                      if (current['due_date'] && current['due_date'].length > 0){
+                        let dueDate = Date.parse(util.format("%s %s", current['due_date'], current['due_time']))/1000;
+                        let dateString = "";
+                        if (current['due_time'] && current['due_time'].length > 0){
+                          dateString = util.format("<!date^%s^{date_short_pretty} at {time}|%s %s>", dueDate, current['due_date'], current['due_time']);
+                        }
+                        else {
+                          dateString = util.format("<!date^%s^{date_short_pretty}|%s>", dueDate, current['due_date']);
+                        }
+                        attachmentFields.push({ "title": "Due Date", "value": dateString, "short": "true"});
+                      }
+                      if (current['note'] && current['note'].length > 0){
+                        attachmentFields.push({ "title": "Notes", "value": current['note'].replace(/<(?:.|\n)*?>/gm, '')});
+                      }
+                    }
 
-                   that.postToSlack(body, cb);
-                 }
-               } else {
-                 throw "Invalid Deal";
-               }
-           });
-         } else {
-            throw "Invalid User";
-         }
-       });// user
+                    body['attachments'][0]['fields'] = attachmentFields;
+                    that.postToSlack(body, cb);
+                  }
+                });
+              }
+              else {
+                let status = deal.status.substr(0, 1).toUpperCase() + deal.status.substr(1, deal.status.length);
+
+                body['text'] = util.format("<mailto:%s|%s> has changed status of deal *%s* to `%s`", user.email, user.name, deal.title, status);
+
+                that.postToSlack(body, cb);
+              }
+            } else {
+              throw "Invalid Deal";
+            }
+          });
+        } else {
+          throw "Invalid User";
+        }
+      });// user
     } else {
         cb({
           status : "ok"
@@ -100,8 +166,10 @@ export class Bot {
 
   private getDeal(args:any, cb:any) {
     let event = args.event;
+    let eventType = event.split(".")[0];
+    let eventObject = event.split(".")[1];
 
-    if (event === Event.ADDED_NOTE){
+    if (eventObject === PipedriveObject.NOTE || eventObject === PipedriveObject.ACTIVITY){
       let dealId = args.current.deal_id;
       if (dealId){
          this.pipeClient.Deals.get(dealId, (err, deal)=>{
@@ -118,7 +186,7 @@ export class Bot {
       if (this.args.meta.action === Status.DELETED){
          return cb(args.previous);
       }
-      else if ((event === Event.ADDED_DEAL)
+      else if ((eventObject === PipedriveObject.DEAL && eventType === EventType.ADDED)
       || (args.current && args.current.stage_id !== args.previous.stage_id)
       || (args.current.status !== Status.OPEN)){
         return cb(args.current);
@@ -139,7 +207,8 @@ export class Bot {
       body : JSON.stringify(body)
     }, (err, response, body)=> {
       if (err){
-        throw err
+        console.log(err);
+        throw err;
       }
       cb(body);
     }); // request
