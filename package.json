@@ -29,7 +29,7 @@
 	"private": true,
 	"scripts": {
 		"build": "tsc",
-		"preinstall": "npm install -g typescript"
+		"preinstall": "npm install -g typescript@2.1.4"
 	},
 	"summary": "To enable Pipedrive to talk to Slack, enter in your Pipedrive API Access Token and your Slack Incomming WebHook URL and click to copy to the clipboard. Then enter into Pipedrive's push notification section.",
 	"version": "1.0.1"
