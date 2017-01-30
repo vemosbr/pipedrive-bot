@@ -1,3 +1,9 @@
 
 # ignore recime folders
 .recime
+
+# ignore compiled js
+main.js
+
+# ignore node modules
+node_modules
