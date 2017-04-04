@@ -1,5 +1,3 @@
-/// <reference path="node.d.ts" />
-
 import util = require('util')
 import PipeDrive = require('pipedrive');
 import request = require('request');
@@ -16,7 +14,7 @@ export class Event {
 }
 
 export class Bot {
-  
+
   private args: any;
   private pipeClient:any;
   private events:Array<string>;

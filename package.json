@@ -13,24 +13,13 @@
 	"license": "MIT",
 	"main": "main.js",
 	"name": "pipedrive",
-	"parameters": [
-		{
-			"description": "pipedrive -> settings-> API -> Access Token",
-			"name": "api_token",
-			"title": "Access Token"
-		},
-		{
-			"datatype": "url",
-			"description": "slack-> app & custom integrations -> incoming webhook",
-			"name": "slack_url",
-			"title": "Incoming Webhook URL"
-		}
-	],
 	"private": true,
 	"scripts": {
-		"build": "tsc",
-		"preinstall": "npm install -g typescript"
+		"build": "tsc"
 	},
-	"summary": "To enable Pipedrive to talk to Slack, enter in your Pipedrive API Access Token and your Slack Incomming WebHook URL and click to copy to the clipboard. Then enter into Pipedrive's push notification section.",
+	"devDependencies": {
+	 "@types/node": "^7.0.12",
+	 "typescript": "^2.2.2"
+ 	},
 	"version": "1.0.1"
 }
